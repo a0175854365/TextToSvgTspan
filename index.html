@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Text to SVG</title>
+</head>
+
+<body onload="">
+    
+    <h3>Target text</h3>
+    <!-- Target text -->
+    <textarea id="targetText" rows="12" cols="80">
+He deals the cards as a meditation
+And those he plays never suspect
+He doesn't play for the money he wins
+He don't play for respect
+
+From here, long text.
+
+He may play the Jack of diamonds He may lay the Queen of spades He may conceal a King in his hand While the memory of it fades
+</textarea>
+
+    <!-- Run button -->
+    <div>
+        <button onClick="start()" style="width: 200px; height: 40px;">
+            RUN
+        </button>
+    </div>
+
+    <!-- Viewer -->
+    <h3>Viewer</h3>
+    <svg id="svgBox" width="600" height="100" style="background-color: lightcyan;">
+        <g><text id="result"></text></g>
+    </svg>
+
+</body>
+
+<script>
+    /**
+     * Parsing target data and set it in svg using.
+     * 1. Find target data
+     * 2. Sprit by line breaks.
+     * 3. Sprit each line by space.
+     * 4. Set the result on viewer.
+     */
+    function start() {
+        let text = document.getElementById('targetText').value;
+        let textSpritByNewLineArray = splitTextByLineBreaks(text);
+        let result = '';
+        textSpritByNewLineArray.forEach((line, splitLineIndex) => {
+            // console.log(line, lineIndex);
+            let tspans = splitTextIntoTSpans(line, 16, 'arial', splitLineIndex);
+            tspans.forEach(value => {
+                result = result + value.outerHTML + " ";
+            });
+        })
+        document.getElementById('result').innerHTML = result;
+    }
+
+    /** 
+     * Sprit sentence into words by space.
+     */
+    let lineIndex = 1;
+    function splitTextIntoTSpans(text, fontSize, fontFamily, splitLineIndex) {
+
+        // 부모창 크기 확인
+        let parentWidth = getElementWidth('svgBox');
+        console.log("svgBox width", parentWidth);
+        const words = text.trim().split(/\s+/);
+        let wordWidth = 0;
+        let wordWidthArray = [0];
+        if (splitLineIndex > 0) {
+            lineIndex++;
+        }
+        let lineHeight = 30;
+
+        return words.map((word, index) => {
+
+            wordWidth = getWordWidth(word, fontSize, fontFamily);
+            console.log(word, wordWidth);
+
+            if (wordWidthArray[index] + wordWidth + 10 > parentWidth) {
+                wordWidthArray[index] = 0;
+                lineIndex++;
+            }
+            let wordY = lineIndex * lineHeight;
+
+            const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+            tspan.setAttributeNS(null, 'x', wordWidthArray[index]);
+            tspan.setAttributeNS(null, 'y', wordY);
+            tspan.setAttributeNS(null, 'font-size', fontSize);
+            tspan.setAttributeNS(null, 'font-family', fontFamily);
+            tspan.textContent = `${word}`;
+            wordWidthArray.push(wordWidthArray[index] + wordWidth + 9);
+            document.getElementById("svgBox").style.height = wordY + 30 + "px";
+            return tspan;
+        });
+    }
+
+    /**
+     * Get text width.
+     */
+    function getWordWidth(word, fontSize, fontFamily) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.font = `${fontSize}px ${fontFamily}`;
+        return ctx.measureText(word).width;
+    }
+
+    /**
+     * Get element width.
+     */
+    function getElementWidth(id) {
+        const element = document.getElementById(id);
+        const elementWidth = element.getBoundingClientRect().width;
+        return elementWidth;
+    }
+
+    /**
+     * Get sentence array.
+     */
+    function splitTextByLineBreaks(text) {
+        const lines = text.split('\n');
+        return lines;
+    }
+
+</script>
+
+</html>
